@@ -158,25 +158,25 @@
 
     "tinytext" : {
         "increased_size"           : "",
-        "type"                     : "text",
+        "type"                     : "varchar(65535)",
         "mySqlVarLenPgSqlFixedLen" : false
     },
 
     "mediumtext" : {
         "increased_size"           : "",
-        "type"                     : "text",
+        "type"                     : "varchar(65535)",
         "mySqlVarLenPgSqlFixedLen" : false
     },
 
     "longtext" : {
         "increased_size"           : "",
-        "type"                     : "text",
+        "type"                     : "varchar(65535)",
         "mySqlVarLenPgSqlFixedLen" : false
     },
 
     "text" : {
         "increased_size"           : "",
-        "type"                     : "text",
+        "type"                     : "varchar(65535)",
         "mySqlVarLenPgSqlFixedLen" : false
     },
 

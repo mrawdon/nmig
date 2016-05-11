@@ -96,6 +96,7 @@ function boot() {
         self._copyOnly            = self._config.copy_only;
         self._noVacuum            = self._config.no_vacuum;
         self._excludeTables       = self._config.exclude_tables;
+        self._includeTables       = self._config.include_tables;
         self._encoding            = self._config.encoding === undefined ? 'utf8' : self._config.encoding;
         self._dataChunkSize       = self._config.data_chunk_size === undefined ? 100 : +self._config.data_chunk_size;
         self._dataChunkSize       = self._dataChunkSize < 100 ? 100 : self._dataChunkSize;
@@ -195,6 +196,13 @@ function mapDataTypes(objDataTypesMap, mySqlDataType) {
             retVal = 'character varying(255)';
         } else if ('decimal' === strDataType || 'numeric' === strDataType) {
             retVal = objDataTypesMap[strDataType].type + '(' + strDataTypeDisplayWidth;
+	   var split = strDataTypeDisplayWidth.split(',');
+            if(split.length === 2){
+              var num = parseInt(split[0]);
+              if(num > 37){
+                retVal = objDataTypesMap[strDataType].type + '(' + 37+','+split[1]; 
+              }
+            } 
         } else if ('decimal(19,2)' === mySqlDataType || objDataTypesMap[strDataType].mySqlVarLenPgSqlFixedLen) {
             // Should be converted without a length definition.
             retVal = increaseOriginalSize
@@ -394,9 +402,9 @@ function logNotCreatedView(viewName, sql) {
 function log(log, tableLogPath, isErrorLog) {
     let buffer = new Buffer(log + '\n\n', self._encoding);
 
-    if (!isErrorLog) {
+    //if (!isErrorLog) {
         console.log(log);
-    }
+    //}
 
     fs.open(self._allLogsPath, 'a', self._0777, (error, fd) => {
         if (!error) {
@@ -523,7 +531,7 @@ function createDataPoolTable() {
                 generateError('\t--[createDataPoolTable] Cannot connect to PostgreSQL server...\n' + error);
                 reject();
             } else {
-                let sql = 'CREATE TABLE "' + self._schema + '"."data_pool_' + self._schema + self._mySqlDbName + '"(' + '"json" TEXT' + ');';
+                let sql = 'CREATE TABLE "' + self._schema + '"."data_pool_' + self._schema + self._mySqlDbName + '"(' + '"json" varchar(65535)' + ');';
                 client.query(sql, err => {
                     done();
 
@@ -600,8 +608,9 @@ function loadStructureToMigrate() {
                                 for (let i = 0; i < rows.length; ++i) {
                                     let relationName = rows[i]['Tables_in_' + self._mySqlDbName];
 
-                                    if (rows[i].Table_type === 'BASE TABLE' && self._excludeTables.indexOf(relationName) === -1) {
-                                        self._tablesToMigrate.push(relationName);
+                                        if (rows[i].Table_type === 'BASE TABLE' &&
+                                    (self._excludeTables.indexOf(relationName) === -1)
+				    && (self._includeTables === undefined || self._includeTables.indexOf(relationName) >= 0)  ) {
                                         self._dicTables[relationName] = new Table(self._logsDirPath + '/' + relationName + '.log');
                                         processTablePromises.push(processTableBeforeDataLoading(relationName));
                                         tablesCnt++;
@@ -899,35 +908,43 @@ function createTable(tableName) {
                                 rejectCreateTable();
                             } else {
                                 pg.connect(self._targetConString, (error, client, done) => {
-                                    if (error) {
+                                   
+ if (error) {
                                         done();
                                         generateError('\t--[createTable] Cannot connect to PostgreSQL server...\n' + error, sql);
                                         rejectCreateTable();
                                     } else {
-                                        sql                                        = 'CREATE TABLE "' + self._schema + '"."' + tableName + '"(';
-                                        self._dicTables[tableName].arrTableColumns = rows;
+					sql = 'DROP TABLE IF EXISTS"'+self._schema+'"."'+tableName+'"';
+					client.query(sql, err => {
+                                                if(err){
+							log(err);		
+						}
 
-                                        for (let i = 0; i < rows.length; ++i) {
-                                            let strConvertedType  = mapDataTypes(self._dataTypesMap, rows[i].Type);
-                                            sql                  += '"' + rows[i].Field + '" ' + strConvertedType + ',';
-                                        }
+	                                        sql = 'CREATE TABLE "' + self._schema + '"."' + tableName + '"(';
+        	                                self._dicTables[tableName].arrTableColumns = rows;
 
-                                        rows = null;
-                                        sql  = sql.slice(0, -1) + ');';
-                                        client.query(sql, err => {
-                                            done();
+                	                        for (let i = 0; i < rows.length; ++i) {
+                        	                    let strConvertedType  = mapDataTypes(self._dataTypesMap, rows[i].Type);
+                                	            sql                  += '"' + rows[i].Field + '" ' + strConvertedType + ',';
+                                        	}
+	
+	                                        rows = null;
+        	                                sql  = sql.slice(0, -1) + ');';
+						log('Executing'+sql);
+                	                       client.query(sql, err => {
+                        	                    done();
 
-                                            if (err) {
-                                                generateError('\t--[createTable] ' + err, sql);
-                                                rejectCreateTable();
-                                            } else {
-                                                log(
-                                                    '\t--[createTable] Table "' + self._schema + '"."' + tableName + '" is created...',
-                                                    self._dicTables[tableName].tableLogPath
-                                                );
-                                                resolveCreateTable();
-                                            }
-                                        });
+                                	            if (err) {
+                                        	        generateError('\t--[createTable] ' + err, sql);
+                                                	rejectCreateTable();
+	                                            } else {
+        	                                        log(
+                	                                    '\t--[createTable] Table "' + self._schema + '"."' + tableName + '" is created...',
+                        	                            self._dicTables[tableName].tableLogPath);
+							resolveCreateTable();
+	                                            }
+                                        	});
+					});
                                     }
                                 });
                             }
@@ -1006,7 +1023,7 @@ function populateTableWorker(tableName, strSelectFieldList, offset, rowsInChunk,
 
                                                                 client.query(sql, (err, result) => {
                                                                     done();
-
+									log('Ran copy with'+err);
                                                                     if (err) {
                                                                         generateError('\t--[populateTableWorker] ' + err, sql);
 
