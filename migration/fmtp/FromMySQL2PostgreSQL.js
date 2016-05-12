@@ -136,6 +136,10 @@ function boot() {
         self._targetConString     = targetConString;
         pg.defaults.poolSize      = self._maxPoolSizeTarget;
 
+        AWS.config.credentials = new AWS.EC2MetadataCredentials({
+          httpOptions: { timeout: 30000 }
+        });
+        AWS.config.update({});
         self._s3Bucket = new AWS.S3({params: {Bucket: self._config.s3Bucket}});
         self._redshiftCredentialsString = self._config.redshiftCredentialsString;
         resolve();
@@ -988,8 +992,7 @@ function createTable(tableName) {
 function writeFile(buffer, csvAddr, callback){
   if(true){
     var key = uuid.v4() + csvAddr;
-    var s3 =  new AWS.S3({params: {Bucket: self._config.s3Bucket}});
-    s3.upload({Key: key, Body: buffer}, function(err, data) {
+    self._s3Bucket.upload({Key: key, Body: buffer}, function(err, data) {
       if(err){
         generateError('\t--[populateTableWorker] ' + err);
         callback(err);
@@ -1068,7 +1071,7 @@ function populateTableWorker(tableName, strSelectFieldList, offset, rowsInChunk,
                                                               + '\' credentials \''+self._redshiftCredentialsString+'\''
                                                               + ' DELIMITER \'' + ',\'' + ' CSV;';
 
-                                                            //log('\t--[populateTableWorker] Copying rows for '+tableName+' '+offset+','+(offset+rowsInChunk));
+                                                            log('\t--[populateTableWorker] Copying rows for '+tableName+' '+offset+','+(offset+rowsInChunk));
                                                             client.query(sql, (err, result) => {
                                                                 done();
 
