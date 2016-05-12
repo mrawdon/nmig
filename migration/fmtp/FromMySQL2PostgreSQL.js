@@ -1789,7 +1789,7 @@ function prepareArrayOfTablesAndChunkOffsets(tableName) {
                                                                     + '"_rowsCnt":' + rowsCnt + '}';
 
                                                         let sql = 'INSERT INTO "' + self._schema + '"."data_pool_' + self._schema + self._mySqlDbName + '" VALUES($1);';
-                                                        if(i % 100 === 0){
+                                                        if((i % 50) === 0){
                                                             log('\t--[prepareArrayOfTablesAndChunkOffsets] Writing data pool record '+i+' for '+tableName);
                                                         }
                                                         client.query(sql, [strJson], err => {
@@ -1809,7 +1809,7 @@ function prepareArrayOfTablesAndChunkOffsets(tableName) {
 
                                         Promise.all(arrDataPoolPromises).then(() => {
                                           log('\t--[prepareArrayOfTablesAndChunkOffsets] Wrote '+i+'data pool records  for '+tableName);
-                                          resolve()
+                                          resolve();
                                         });
                                     }
                                 });
