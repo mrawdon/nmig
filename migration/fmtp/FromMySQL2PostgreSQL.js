@@ -988,7 +988,8 @@ function createTable(tableName) {
 function writeFile(buffer, csvAddr, callback){
   if(true){
     var key = uuid.v4() + csvAddr;
-    self._s3Bucket.upload({Key: key, Body: buffer}, function(err, data) {
+    var s3 =  new AWS.S3({params: {Bucket: self._config.s3Bucket}});
+    s3.upload({Key: key, Body: buffer}, function(err, data) {
       if(err){
         generateError('\t--[populateTableWorker] ' + err);
         callback(err);
