@@ -202,7 +202,7 @@ function mapDataTypes(objDataTypesMap, mySqlDataType) {
         } else if ('decimal' === strDataType || 'numeric' === strDataType) {
 
             retVal = objDataTypesMap[strDataType].type + '(' + strDataTypeDisplayWidth;
-            var split = '23,0)'.split(',');
+            var split = strDataTypeDisplayWidth.split(',');
             if(split.length === 2){
               var num = parseInt(split[0]);
               if(num > 38){
