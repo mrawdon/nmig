@@ -919,16 +919,7 @@ function createTable(tableName) {
                                         generateError('\t--[createTable] Cannot connect to PostgreSQL server...\n' + error, sql);
                                         rejectCreateTable();
                                     } else {
-                                        sql                                        = 'CREATE TABLE "' + self._schema + '"."' + tableName + '"(';
-                                        self._dicTables[tableName].arrTableColumns = rows;
-
-                                        for (let i = 0; i < rows.length; ++i) {
-                                            let strConvertedType  = mapDataTypes(self._dataTypesMap, rows[i].Type);
-                                            sql                  += '"' + rows[i].Field + '" ' + strConvertedType + ',';
-                                        }
-
-                                        rows = null;
-                                        sql  = sql.slice(0, -1) + ');';
+                                        sql = "DROP TABLE IF EXISTS"+ self._schema + '"."' + tableName;
                                         client.query(sql, err => {
                                             done();
 
@@ -936,14 +927,34 @@ function createTable(tableName) {
                                                 generateError('\t--[createTable] ' + err, sql);
                                                 rejectCreateTable();
                                             } else {
-                                                log(
-                                                    '\t--[createTable] Table "' + self._schema + '"."' + tableName + '" is created...',
-                                                    self._dicTables[tableName].tableLogPath
-                                                );
-                                                resolveCreateTable();
-                                            }
+
+                                              sql = 'CREATE TABLE "' + self._schema + '"."' + tableName + '"(';
+                                              self._dicTables[tableName].arrTableColumns = rows;
+
+                                              for (let i = 0; i < rows.length; ++i) {
+                                                  let strConvertedType  = mapDataTypes(self._dataTypesMap, rows[i].Type);
+                                                  sql                  += '"' + rows[i].Field + '" ' + strConvertedType + ',';
+                                              }
+
+                                              rows = null;
+                                              sql  = sql.slice(0, -1) + ');';
+                                              client.query(sql, err => {
+                                                  done();
+
+                                                  if (err) {
+                                                      generateError('\t--[createTable] ' + err, sql);
+                                                      rejectCreateTable();
+                                                  } else {
+                                                      log(
+                                                          '\t--[createTable] Table "' + self._schema + '"."' + tableName + '" is created...',
+                                                          self._dicTables[tableName].tableLogPath
+                                                      );
+                                                      resolveCreateTable();
+                                                  }
+                                              });
+                                          }
                                         });
-                                    }
+                                      }
                                 });
                             }
                         });
