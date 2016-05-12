@@ -77,7 +77,7 @@
         "type"                     : "geometry",
         "mySqlVarLenPgSqlFixedLen" : false
     },
-    
+
     "numeric" : {
         "increased_size"           : "",
         "type"                     : "numeric",
@@ -182,37 +182,37 @@
 
     "varbinary" : {
         "increased_size"           : "",
-        "type"                     : "bytea",
+        "type"                     : "varchar(65535)",
         "mySqlVarLenPgSqlFixedLen" : true
     },
 
     "binary" : {
         "increased_size"           : "",
-        "type"                     : "bytea",
+        "type"                     : "varchar(65535)",
         "mySqlVarLenPgSqlFixedLen" : true
     },
 
     "tinyblob" : {
         "increased_size"           : "",
-        "type"                     : "bytea",
+        "type"                     : "varchar(65535)",
         "mySqlVarLenPgSqlFixedLen" : false
     },
 
     "mediumblob" : {
         "increased_size"           : "",
-        "type"                     : "bytea",
+        "type"                     : "varchar(65535)",
         "mySqlVarLenPgSqlFixedLen" : false
     },
 
     "longblob" : {
         "increased_size"           : "",
-        "type"                     : "bytea",
+        "type"                     : "varchar(65535)",
         "mySqlVarLenPgSqlFixedLen" : false
     },
 
     "blob" : {
         "increased_size"           : "",
-        "type"                     : "bytea",
+        "type"                     : "varchar(65535)",
         "mySqlVarLenPgSqlFixedLen" : false
     }
 }
