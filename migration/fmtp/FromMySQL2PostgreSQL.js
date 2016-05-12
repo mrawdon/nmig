@@ -1053,8 +1053,10 @@ function populateTableWorker(tableName, strSelectFieldList, offset, rowsInChunk,
                                                         resolvePopulateTableWorker();
                                                     } else {
                                                       sql = 'COPY "' + self._schema + '"."' + tableName + '" FROM '
-                                                              + '\'' + filename + '\' DELIMITER \'' + ',\'' + ' CSV'
-                                                              + ' credentials "'+self._redshiftCredentialsString+'";';
+                                                              + '\'' + filename
+                                                              + ' credentials \''+self._redshiftCredentialsString+'\''
+                                                              + '\' DELIMITER \'' + ',\'' + ' CSV;';
+
 
                                                             client.query(sql, (err, result) => {
                                                                 done();
