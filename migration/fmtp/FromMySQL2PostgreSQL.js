@@ -1782,15 +1782,15 @@ function prepareArrayOfTablesAndChunkOffsets(tableName) {
                                                             + '"_offset":' + offset + ','
                                                             + '"_rowsInChunk":' + rowsInChunk + ','
                                                             + '"_rowsCnt":' + rowsCnt + '}';
-                                                records.push(strJson);
-
+                                                //records.push(strJson);
+                                                self._dataPool.push(JSON.parse(strJson));
                                                 //});
                                             }
 
                                       }
 
 
-                                      pg.connect(self._targetConString, (error, client, done) => {
+                                      /*pg.connect(self._targetConString, (error, client, done) => {
                                           if (error) {
                                               done();
                                               generateError('\t--[prepareArrayOfTablesAndChunkOffsets] Cannot connect to PostgreSQL server...\n' + error);
@@ -1814,7 +1814,7 @@ function prepareArrayOfTablesAndChunkOffsets(tableName) {
                                                 resolve();
                                             });
                                           }
-                                        });
+                                        });*/
                                     });
                                   }
                               });
@@ -1990,13 +1990,13 @@ module.exports = function(config) {
             log('\t--[FromMySQL2PostgreSQL] Cannot create data-pool...');
             cleanup();
         }
-    ).then(
+    )/*.then(
         readDataPool,
         () => {
             log('\t--[FromMySQL2PostgreSQL] NMIG cannot load source database structure...');
             cleanup();
         }
-    ).then(
+    )*/.then(
         dataPipe,
         () => {
             log('\t--[FromMySQL2PostgreSQL] NMIG failed to load Data-Units pool...');
