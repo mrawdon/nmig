@@ -1052,10 +1052,10 @@ function populateTableWorker(tableName, strSelectFieldList, offset, rowsInChunk,
                                                         generateError('\t--[populateTableWorker] Cannot connect to PostgreSQL server...\n' + error, sql);
                                                         resolvePopulateTableWorker();
                                                     } else {
-                                                      sql = 'COPY "' + self._schema + '"."' + tableName + '" FROM '
+                                                      sql = 'COPY "' + self._schema + '"."' + tableName + '\'" FROM '
                                                               + '\'' + filename
                                                               + ' credentials \''+self._redshiftCredentialsString+'\''
-                                                              + '\' DELIMITER \'' + ',\'' + ' CSV;';
+                                                              + ' DELIMITER \'' + ',\'' + ' CSV;';
 
 
                                                             client.query(sql, (err, result) => {
