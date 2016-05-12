@@ -1050,7 +1050,7 @@ function populateTableWorker(tableName, strSelectFieldList, offset, rowsInChunk,
                                     } else {
                                         let buffer = new Buffer(csvString, self._encoding);
                                         csvString  = null;
-                                        log('Writing rows for '+tableName+' '+offset+','+(offset+rowsInChunk));
+                                        log('\t--[populateTableWorker] Writing rows for '+tableName+' '+offset+','+(offset+rowsInChunk));
                                         writeFile(buffer, csvAddr,(csvErrorFputcsvWrite,filename)=>{
                                             if (csvErrorFputcsvWrite) {
                                                 generateError('\t--[populateTableWorker] ' + csvErrorFputcsvWrite);
