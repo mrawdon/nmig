@@ -537,7 +537,7 @@ function createDataPoolTable() {
                 generateError('\t--[createDataPoolTable] Cannot connect to PostgreSQL server...\n' + error);
                 reject();
             } else {
-                let sql = 'DROP TABLE "' + self._schema + '"."data_pool_' + self._schema + self._mySqlDbName + ' IF EXISTS'; 
+                let sql = 'DROP TABLE "' + self._schema + '"."data_pool_' + self._schema + self._mySqlDbName + '" IF EXISTS'; 
                 client.query(sql, err => {
                   sql = 'CREATE TABLE "' + self._schema + '"."data_pool_' + self._schema + self._mySqlDbName + '"(' + '"json" '+mapDataTypes(self._dataTypesMap, 'text') + ');';
                   client.query(sql, err => {
