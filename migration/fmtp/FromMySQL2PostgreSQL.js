@@ -408,9 +408,8 @@ function logNotCreatedView(viewName, sql) {
 function log(log, tableLogPath, isErrorLog) {
     let buffer = new Buffer(log + '\n\n', self._encoding);
 
-    if (!isErrorLog) {
-        console.log(log);
-    }
+    console.log(log);
+
 
     fs.open(self._allLogsPath, 'a', self._0777, (error, fd) => {
         if (!error) {
