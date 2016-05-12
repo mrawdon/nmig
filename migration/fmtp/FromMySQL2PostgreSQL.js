@@ -1798,6 +1798,9 @@ function prepareArrayOfTablesAndChunkOffsets(tableName) {
                                           } else {
                                             let sql = 'INSERT INTO "' + self._schema + '"."data_pool_' + self._schema + self._mySqlDbName + '" VALUES';
                                             for(var i =1; i<= records.length; i++){
+                                              if(i>1){
+                                                sql+=",";
+                                              }
                                               sql+="($"+i+")";
                                             }
                                             sql +=';';
