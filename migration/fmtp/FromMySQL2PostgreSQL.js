@@ -1093,7 +1093,7 @@ function populateTableWorker(tableName, strSelectFieldList, offset, rowsInChunk,
                                                                             + 'Total rows to insert into "' + self._schema + '"."' + tableName + '": ' + rowsCnt;
 
                                                                     log(msg);
-
+                                                                    resolvePopulateTableWorker();
                                                                 }
                                                             });
                                                     }
