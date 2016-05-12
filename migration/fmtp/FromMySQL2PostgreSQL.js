@@ -921,9 +921,8 @@ function createTable(tableName) {
                                     } else {
                                         sql = "DROP TABLE IF EXISTS "+ self._schema + '"."' + tableName;
                                         client.query(sql, err => {
-                                            done();
-
                                             if (err) {
+                                                done();
                                                 generateError('\t--[createTable] ' + err, sql);
                                                 rejectCreateTable();
                                             } else {
