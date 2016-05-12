@@ -136,7 +136,7 @@ function boot() {
         self._targetConString     = targetConString;
         pg.defaults.poolSize      = self._maxPoolSizeTarget;
 
-        self._s3bucket = new AWS.S3({params: {Bucket: self._config.s3Bucket}});
+        self._s3Bucket = new AWS.S3({params: {Bucket: self._config.s3Bucket}});
         resolve();
     }).then(
         readDataTypesMap
