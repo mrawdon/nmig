@@ -1040,7 +1040,7 @@ function populateTableWorker(tableName, strSelectFieldList, offset, rowsInChunk,
                                 resolvePopulateTableWorker();
                             } else {
                                 rowsInChunk = rows.length;
-                                log('\t--[populateTableWorker] Csvifying rows for '+tableName+' '+offset+','+(offset+rowsInChunk));
+                                //log('\t--[populateTableWorker] Csvifying rows for '+tableName+' '+offset+','+(offset+rowsInChunk));
                                 csvStringify(rows, (csvError, csvString) => {
                                     rows = null;
 
@@ -1050,7 +1050,7 @@ function populateTableWorker(tableName, strSelectFieldList, offset, rowsInChunk,
                                     } else {
                                         let buffer = new Buffer(csvString, self._encoding);
                                         csvString  = null;
-                                        log('\t--[populateTableWorker] Writing rows for '+tableName+' '+offset+','+(offset+rowsInChunk));
+                                        //log('\t--[populateTableWorker] Writing rows for '+tableName+' '+offset+','+(offset+rowsInChunk));
                                         writeFile(buffer, csvAddr,(csvErrorFputcsvWrite,filename)=>{
                                             if (csvErrorFputcsvWrite) {
                                                 generateError('\t--[populateTableWorker] ' + csvErrorFputcsvWrite);
@@ -1067,7 +1067,7 @@ function populateTableWorker(tableName, strSelectFieldList, offset, rowsInChunk,
                                                               + '\' credentials \''+self._redshiftCredentialsString+'\''
                                                               + ' DELIMITER \'' + ',\'' + ' CSV;';
 
-                                                            log('\t--[populateTableWorker] Copying rows for '+tableName+' '+offset+','+(offset+rowsInChunk));
+                                                            //log('\t--[populateTableWorker] Copying rows for '+tableName+' '+offset+','+(offset+rowsInChunk));
                                                             client.query(sql, (err, result) => {
                                                                 done();
 
