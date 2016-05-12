@@ -5,6 +5,8 @@
   "author": "Anatoly Khaytovich<anatolyuss@gmail.com>",
   "dependencies": {
     "mysql": "*",
-    "pg": "*"
+    "pg": "*",
+    "aws-sdk": "2.1.20",
+    "node-uuid": "*"
   }
 }

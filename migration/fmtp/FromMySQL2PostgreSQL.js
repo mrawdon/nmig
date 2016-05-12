@@ -28,6 +28,8 @@ const csvStringify       = require('./CsvStringifyModified');
 const viewGenerator      = require('./ViewGenerator');
 const arrangeColumnsData = require('./ColumnsDataArranger');
 const Table              = require('./Table');
+var AWS = require('aws-sdk');
+var uuid = require('node-uuid');
 
 const eventEmitter = new events.EventEmitter();
 const self         = {
@@ -43,6 +45,7 @@ const self         = {
     _copyOnly            : null,
     _noVacuum            : null,
     _excludeTables       : null,
+    _includeTables       : null,
     _timeBegin           : new Date(),
     _encoding            : '',
     _dataChunkSize       : 0,
@@ -132,6 +135,8 @@ function boot() {
 
         self._targetConString     = targetConString;
         pg.defaults.poolSize      = self._maxPoolSizeTarget;
+
+        self._s3bucket = new AWS.S3({params: {Bucket: self._config.s3Bucket}});
         resolve();
     }).then(
         readDataTypesMap
@@ -195,14 +200,15 @@ function mapDataTypes(objDataTypesMap, mySqlDataType) {
         if ('enum' === strDataType) {
             retVal = 'character varying(255)';
         } else if ('decimal' === strDataType || 'numeric' === strDataType) {
+
             retVal = objDataTypesMap[strDataType].type + '(' + strDataTypeDisplayWidth;
-	   var split = strDataTypeDisplayWidth.split(',');
+            var split = '23,0)'.split(',');
             if(split.length === 2){
               var num = parseInt(split[0]);
-              if(num > 37){
-                retVal = objDataTypesMap[strDataType].type + '(' + 37+','+split[1]; 
+              if(num > 38){
+                retVal = objDataTypesMap[strDataType].type + '(' + 38+split[1];
               }
-            } 
+            }
         } else if ('decimal(19,2)' === mySqlDataType || objDataTypesMap[strDataType].mySqlVarLenPgSqlFixedLen) {
             // Should be converted without a length definition.
             retVal = increaseOriginalSize
@@ -402,9 +408,9 @@ function logNotCreatedView(viewName, sql) {
 function log(log, tableLogPath, isErrorLog) {
     let buffer = new Buffer(log + '\n\n', self._encoding);
 
-    //if (!isErrorLog) {
+    if (!isErrorLog) {
         console.log(log);
-    //}
+    }
 
     fs.open(self._allLogsPath, 'a', self._0777, (error, fd) => {
         if (!error) {
@@ -531,7 +537,7 @@ function createDataPoolTable() {
                 generateError('\t--[createDataPoolTable] Cannot connect to PostgreSQL server...\n' + error);
                 reject();
             } else {
-                let sql = 'CREATE TABLE "' + self._schema + '"."data_pool_' + self._schema + self._mySqlDbName + '"(' + '"json" varchar(65535)' + ');';
+                let sql = 'CREATE TABLE "' + self._schema + '"."data_pool_' + self._schema + self._mySqlDbName + '"(' + '"json" varchar()' + ');';
                 client.query(sql, err => {
                     done();
 
@@ -608,9 +614,10 @@ function loadStructureToMigrate() {
                                 for (let i = 0; i < rows.length; ++i) {
                                     let relationName = rows[i]['Tables_in_' + self._mySqlDbName];
 
-                                        if (rows[i].Table_type === 'BASE TABLE' &&
+                                    if (rows[i].Table_type === 'BASE TABLE' &&
                                     (self._excludeTables.indexOf(relationName) === -1)
-				    && (self._includeTables === undefined || self._includeTables.indexOf(relationName) >= 0)  ) {
+                                  && (self._includeTables === undefined || self._includeTables.indexOf(relationName) >= 0)) {
+                                        self._tablesToMigrate.push(relationName);
                                         self._dicTables[relationName] = new Table(self._logsDirPath + '/' + relationName + '.log');
                                         processTablePromises.push(processTableBeforeDataLoading(relationName));
                                         tablesCnt++;
@@ -901,50 +908,42 @@ function createTable(tableName) {
                     } else {
                         let sql = 'SHOW FULL COLUMNS FROM `' + tableName + '`;';
                         connection.query(sql, (err, rows) => {
-                            connection.release();
+                            connection  .release();
 
                             if (err) {
                                 generateError('\t--[createTable] ' + err, sql);
                                 rejectCreateTable();
                             } else {
                                 pg.connect(self._targetConString, (error, client, done) => {
-                                   
- if (error) {
+                                    if (error) {
                                         done();
                                         generateError('\t--[createTable] Cannot connect to PostgreSQL server...\n' + error, sql);
                                         rejectCreateTable();
                                     } else {
-					sql = 'DROP TABLE IF EXISTS"'+self._schema+'"."'+tableName+'"';
-					client.query(sql, err => {
-                                                if(err){
-							log(err);		
-						}
+                                        sql                                        = 'CREATE TABLE "' + self._schema + '"."' + tableName + '"(';
+                                        self._dicTables[tableName].arrTableColumns = rows;
 
-	                                        sql = 'CREATE TABLE "' + self._schema + '"."' + tableName + '"(';
-        	                                self._dicTables[tableName].arrTableColumns = rows;
+                                        for (let i = 0; i < rows.length; ++i) {
+                                            let strConvertedType  = mapDataTypes(self._dataTypesMap, rows[i].Type);
+                                            sql                  += '"' + rows[i].Field + '" ' + strConvertedType + ',';
+                                        }
 
-                	                        for (let i = 0; i < rows.length; ++i) {
-                        	                    let strConvertedType  = mapDataTypes(self._dataTypesMap, rows[i].Type);
-                                	            sql                  += '"' + rows[i].Field + '" ' + strConvertedType + ',';
-                                        	}
-	
-	                                        rows = null;
-        	                                sql  = sql.slice(0, -1) + ');';
-						log('Executing'+sql);
-                	                       client.query(sql, err => {
-                        	                    done();
+                                        rows = null;
+                                        sql  = sql.slice(0, -1) + ');';
+                                        client.query(sql, err => {
+                                            done();
 
-                                	            if (err) {
-                                        	        generateError('\t--[createTable] ' + err, sql);
-                                                	rejectCreateTable();
-	                                            } else {
-        	                                        log(
-                	                                    '\t--[createTable] Table "' + self._schema + '"."' + tableName + '" is created...',
-                        	                            self._dicTables[tableName].tableLogPath);
-							resolveCreateTable();
-	                                            }
-                                        	});
-					});
+                                            if (err) {
+                                                generateError('\t--[createTable] ' + err, sql);
+                                                rejectCreateTable();
+                                            } else {
+                                                log(
+                                                    '\t--[createTable] Table "' + self._schema + '"."' + tableName + '" is created...',
+                                                    self._dicTables[tableName].tableLogPath
+                                                );
+                                                resolveCreateTable();
+                                            }
+                                        });
                                     }
                                 });
                             }
@@ -967,6 +966,40 @@ function createTable(tableName) {
  * @param   {Number} rowsCnt
  * @returns {Promise}
  */
+
+function writeFile(buffer, csvAddr, callback){
+  if(true){
+    var key = uuid.v4() + csvAddr;
+    self.s3bucket.upload({Key: key, Body: buffer}, function(err, data) {
+      if(err){
+        generateError('\t--[populateTableWorker] ' + err);
+        callback(err);
+      }else{
+        callback(false, "s3://"+self._config.s3Bucket+"/"+key);
+      }
+    });
+  }else{
+    var filename = self._tempDirPath + '/' + csvAddr;
+    fs.open(filename, 'a', self._0777, (csvErrorFputcsvOpen, fd) => {
+        if (csvErrorFputcsvOpen) {
+            buffer = null;
+            generateError('\t--[populateTableWorker] ' + csvErrorFputcsvOpen);
+            callback(csvErrorFputcsvOpen);
+        } else {
+            fs.write(fd, buffer, 0, buffer.length, null, csvErrorFputcsvWrite => {
+              if(csvErrorFputcsvWrite){
+                generateError('\t--[populateTableWorker] ' + csvErrorFputcsvWrite);
+                callback(csvErrorFputcsvWrite);
+              }
+                buffer = null;
+                callback(false, filename);
+            });
+      }
+    });
+  }
+}
+
+
 function populateTableWorker(tableName, strSelectFieldList, offset, rowsInChunk, rowsCnt) {
     return connect().then(
         () => {
@@ -977,7 +1010,7 @@ function populateTableWorker(tableName, strSelectFieldList, offset, rowsInChunk,
                         generateError('\t--[populateTableWorker] Cannot connect to MySQL server...\n\t' + error);
                         resolvePopulateTableWorker();
                     } else {
-                        let csvAddr = self._tempDirPath + '/' + tableName + offset + '.csv';
+                        let csvAddr =  tableName + offset + '.csv';
                         let sql     = 'SELECT ' + strSelectFieldList + ' FROM `' + tableName + '` LIMIT ' + offset + ',' + rowsInChunk + ';';
 
                         connection.query(sql, (err, rows) => {
@@ -988,7 +1021,7 @@ function populateTableWorker(tableName, strSelectFieldList, offset, rowsInChunk,
                                 resolvePopulateTableWorker();
                             } else {
                                 rowsInChunk = rows.length;
-                                
+
                                 csvStringify(rows, (csvError, csvString) => {
                                     rows = null;
 
@@ -998,74 +1031,50 @@ function populateTableWorker(tableName, strSelectFieldList, offset, rowsInChunk,
                                     } else {
                                         let buffer = new Buffer(csvString, self._encoding);
                                         csvString  = null;
-
-                                        fs.open(csvAddr, 'a', self._0777, (csvErrorFputcsvOpen, fd) => {
-                                            if (csvErrorFputcsvOpen) {
-                                                buffer = null;
-                                                generateError('\t--[populateTableWorker] ' + csvErrorFputcsvOpen);
+                                        writeFile(buffer, csvAddr,(csvErrorFputcsvWrite,filename)=>{
+                                            if (csvErrorFputcsvWrite) {
+                                                generateError('\t--[populateTableWorker] ' + csvErrorFputcsvWrite);
                                                 resolvePopulateTableWorker();
                                             } else {
-                                                fs.write(fd, buffer, 0, buffer.length, null, csvErrorFputcsvWrite => {
-                                                    buffer = null;
-
-                                                    if (csvErrorFputcsvWrite) {
-                                                        generateError('\t--[populateTableWorker] ' + csvErrorFputcsvWrite);
+                                                pg.connect(self._targetConString, (error, client, done) => {
+                                                    if (error) {
+                                                        done();
+                                                        generateError('\t--[populateTableWorker] Cannot connect to PostgreSQL server...\n' + error, sql);
                                                         resolvePopulateTableWorker();
                                                     } else {
-                                                        pg.connect(self._targetConString, (error, client, done) => {
-                                                            if (error) {
+                                                      sql = 'COPY "' + self._schema + '"."' + tableName + '" FROM '
+                                                              + '\'' + filename + '\' DELIMITER \'' + ',\'' + ' CSV;';
+
+                                                            client.query(sql, (err, result) => {
                                                                 done();
-                                                                generateError('\t--[populateTableWorker] Cannot connect to PostgreSQL server...\n' + error, sql);
-                                                                resolvePopulateTableWorker();
-                                                            } else {
-                                                                sql = 'COPY "' + self._schema + '"."' + tableName + '" FROM '
-                                                                    + '\'' + csvAddr + '\' DELIMITER \'' + ',\'' + ' CSV;';
 
-                                                                client.query(sql, (err, result) => {
-                                                                    done();
-									log('Ran copy with'+err);
-                                                                    if (err) {
-                                                                        generateError('\t--[populateTableWorker] ' + err, sql);
+                                                                if (err) {
+                                                                    generateError('\t--[populateTableWorker] ' + err, sql);
 
-                                                                        if (self._copyOnly.indexOf(tableName) === -1) {
-                                                                            populateTableByInsert(tableName, strSelectFieldList, offset, rowsInChunk, () => {
-                                                                                let msg = '\t--[populateTableWorker]  For now inserted: ' + self._dicTables[tableName].totalRowsInserted + ' rows, '
-                                                                                        + 'Total rows to insert into "' + self._schema + '"."' + tableName + '": ' + rowsCnt;
-
-                                                                                log(msg);
-                                                                                fs.unlink(csvAddr, () => {
-                                                                                    fs.close(fd, () => {
-                                                                                        resolvePopulateTableWorker();
-                                                                                    });
-                                                                                });
-                                                                            });
-                                                                        } else {
+                                                                    if (self._copyOnly.indexOf(tableName) === -1) {
+                                                                        populateTableByInsert(tableName, strSelectFieldList, offset, rowsInChunk, () => {
                                                                             let msg = '\t--[populateTableWorker]  For now inserted: ' + self._dicTables[tableName].totalRowsInserted + ' rows, '
-                                                                                    + 'Total rows to insert into "' + self._schema + '"."' + tableName + '": ' + rowsCnt;
-
+                                                                                    + 'Total rows to insert into "' + self  ._schema + '"."' + tableName + '": ' + rowsCnt;
                                                                             log(msg);
-                                                                            fs.unlink(csvAddr, () => {
-                                                                                fs.close(fd, () => {
-                                                                                    resolvePopulateTableWorker();
-                                                                                });
-                                                                            });
-                                                                        }
 
+                                                                        });
                                                                     } else {
-                                                                        self._dicTables[tableName].totalRowsInserted += result.rowCount;
                                                                         let msg = '\t--[populateTableWorker]  For now inserted: ' + self._dicTables[tableName].totalRowsInserted + ' rows, '
                                                                                 + 'Total rows to insert into "' + self._schema + '"."' + tableName + '": ' + rowsCnt;
 
                                                                         log(msg);
-                                                                        fs.unlink(csvAddr, () => {
-                                                                            fs.close(fd, () => {
-                                                                                resolvePopulateTableWorker();
-                                                                            });
-                                                                        });
+
                                                                     }
-		                                                            });
-                                                            }
-                                                       });
+
+                                                                } else {
+                                                                    self._dicTables[tableName].totalRowsInserted += result.rowCount;
+                                                                    let msg = '\t--[populateTableWorker]  For now inserted: ' + self._dicTables[tableName].totalRowsInserted + ' rows, '
+                                                                            + 'Total rows to insert into "' + self._schema + '"."' + tableName + '": ' + rowsCnt;
+
+                                                                    log(msg);
+
+                                                                }
+                                                            });
                                                     }
                                                 });
                                             }
