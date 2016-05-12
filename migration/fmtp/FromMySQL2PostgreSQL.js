@@ -919,7 +919,7 @@ function createTable(tableName) {
                                         generateError('\t--[createTable] Cannot connect to PostgreSQL server...\n' + error, sql);
                                         rejectCreateTable();
                                     } else {
-                                        sql = "DROP TABLE IF EXISTS"+ self._schema + '"."' + tableName;
+                                        sql = "DROP TABLE IF EXISTS "+ self._schema + '"."' + tableName;
                                         client.query(sql, err => {
                                             done();
 
