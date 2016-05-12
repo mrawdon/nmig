@@ -206,7 +206,7 @@ function mapDataTypes(objDataTypesMap, mySqlDataType) {
             if(split.length === 2){
               var num = parseInt(split[0]);
               if(num > 38){
-                retVal = objDataTypesMap[strDataType].type + '(' + 38+split[1];
+                retVal = objDataTypesMap[strDataType].type + '(' + 38+','+split[1];
               }
             }
         } else if ('decimal(19,2)' === mySqlDataType || objDataTypesMap[strDataType].mySqlVarLenPgSqlFixedLen) {
