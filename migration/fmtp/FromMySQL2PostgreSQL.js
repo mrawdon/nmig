@@ -873,7 +873,7 @@ function runVacuumFullAndAnalyze() {
                                 generateError('\t--[runVacuumFullAndAnalyze] Cannot connect to PostgreSQL server...');
                                 resolveVacuum();
                             } else {
-                                let sql = 'VACUUM (FULL, ANALYZE) "' + self._schema + '"."' + self._tablesToMigrate[i] + '";';
+                                let sql = 'VACUUM FULL "' + self._schema + '"."' + self._tablesToMigrate[i] + '";';
                                 client.query(sql, err => {
                                     done();
 
@@ -1028,9 +1028,10 @@ function populateTableWorker(tableName, strSelectFieldList, offset, rowsInChunk,
                         generateError('\t--[populateTableWorker] Cannot connect to MySQL server...\n\t' + error);
                         resolvePopulateTableWorker();
                     } else {
+
                         let csvAddr =  tableName + offset + '.csv';
                         let sql     = 'SELECT ' + strSelectFieldList + ' FROM `' + tableName + '` LIMIT ' + offset + ',' + rowsInChunk + ';';
-
+                        log('\t--[populateTableWorker] Fetching rows for '+tableName+' '+offset+','+(offset+rowsInChunk));
                         connection.query(sql, (err, rows) => {
                             connection.release();
 
@@ -1039,7 +1040,7 @@ function populateTableWorker(tableName, strSelectFieldList, offset, rowsInChunk,
                                 resolvePopulateTableWorker();
                             } else {
                                 rowsInChunk = rows.length;
-
+                                log('\t--[populateTableWorker] Csvifying rows for '+tableName+' '+offset+','+(offset+rowsInChunk));
                                 csvStringify(rows, (csvError, csvString) => {
                                     rows = null;
 
@@ -1049,6 +1050,7 @@ function populateTableWorker(tableName, strSelectFieldList, offset, rowsInChunk,
                                     } else {
                                         let buffer = new Buffer(csvString, self._encoding);
                                         csvString  = null;
+                                        log('Writing rows for '+tableName+' '+offset+','+(offset+rowsInChunk));
                                         writeFile(buffer, csvAddr,(csvErrorFputcsvWrite,filename)=>{
                                             if (csvErrorFputcsvWrite) {
                                                 generateError('\t--[populateTableWorker] ' + csvErrorFputcsvWrite);
@@ -1065,7 +1067,7 @@ function populateTableWorker(tableName, strSelectFieldList, offset, rowsInChunk,
                                                               + '\' credentials \''+self._redshiftCredentialsString+'\''
                                                               + ' DELIMITER \'' + ',\'' + ' CSV;';
 
-
+                                                            log('\t--[populateTableWorker] Copying rows for '+tableName+' '+offset+','+(offset+rowsInChunk));
                                                             client.query(sql, (err, result) => {
                                                                 done();
 
