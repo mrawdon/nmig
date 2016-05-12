@@ -1800,7 +1800,7 @@ function prepareArrayOfTablesAndChunkOffsets(tableName) {
                                             for(var i =1; i<= records.length; i++){
                                               sql+="($"+i+")";
                                             }
-                                            sql +=');';
+                                            sql +=';';
                                             client.query(sql, records, err => {
                                                 done();
 
