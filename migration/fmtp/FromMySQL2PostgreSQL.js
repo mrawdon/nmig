@@ -1777,18 +1777,26 @@ function prepareArrayOfTablesAndChunkOffsets(tableName) {
                                         for (let offset = 0; offset < rowsCnt; offset += rowsInChunk) {
                                             //arrDataPoolPromises.push(new Promise(resolveDataUnit => {
 
-                                                let strJson = '{"_tableName":"' + tableName
+                                                /*let strJson = '{"_tableName":"' + tableName
                                                             + '","_selectFieldList":"' + strSelectFieldList + '",'
                                                             + '"_offset":' + offset + ','
                                                             + '"_rowsInChunk":' + rowsInChunk + ','
-                                                            + '"_rowsCnt":' + rowsCnt + '}';
+                                                            + '"_rowsCnt":' + rowsCnt + '}';*/
                                                 //records.push(strJson);
-                                                self._dataPool.push(JSON.parse(strJson));
+                                                //self._dataPool.push(JSON.parse(strJson));
+
+                                                self._dataPool.push({
+                                                    "_tableName":  tableName,
+                                                    "_selectFieldList": strSelectFieldList,
+                                                    "_offset":  offset,
+                                                    "_rowsInChunk":  rowsInChunk,
+                                                    "_rowsCnt":  rowsCnt
+                                                });
                                                 //});
                                             }
 
                                       }
-
+                                      resolve();
 
                                       /*pg.connect(self._targetConString, (error, client, done) => {
                                           if (error) {
