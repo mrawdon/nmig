@@ -1773,7 +1773,7 @@ function prepareArrayOfTablesAndChunkOffsets(tableName) {
                                                                 + '"' + self._schema + '"."' + tableName + '": ' + rowsCnt;
 
                                         log(msg, self._dicTables[tableName].tableLogPath);
-
+                                        var i =0;
                                         for (let offset = 0; offset < rowsCnt; offset += rowsInChunk) {
                                             arrDataPoolPromises.push(new Promise(resolveDataUnit => {
                                                 pg.connect(self._targetConString, (error, client, done) => {
@@ -1789,6 +1789,9 @@ function prepareArrayOfTablesAndChunkOffsets(tableName) {
                                                                     + '"_rowsCnt":' + rowsCnt + '}';
 
                                                         let sql = 'INSERT INTO "' + self._schema + '"."data_pool_' + self._schema + self._mySqlDbName + '" VALUES($1);';
+                                                        if(i % 100 === 0){
+                                                            log('\t--[prepareArrayOfTablesAndChunkOffsets] Writing data pool record '+i+' for '+tableName);
+                                                        }
                                                         client.query(sql, [strJson], err => {
                                                             done();
 
@@ -1801,9 +1804,13 @@ function prepareArrayOfTablesAndChunkOffsets(tableName) {
                                                     }
                                                 });
                                             }));
+                                            i++;
                                         }
 
-                                        Promise.all(arrDataPoolPromises).then(() => resolve());
+                                        Promise.all(arrDataPoolPromises).then(() => {
+                                          log('\t--[prepareArrayOfTablesAndChunkOffsets] Wrote '+i+'data pool records  for '+tableName);
+                                          resolve()
+                                        });
                                     }
                                 });
                             }
