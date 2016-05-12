@@ -137,6 +137,7 @@ function boot() {
         pg.defaults.poolSize      = self._maxPoolSizeTarget;
 
         self._s3Bucket = new AWS.S3({params: {Bucket: self._config.s3Bucket}});
+        self._redshiftCredentialsString = self._config.redshiftCredentialsString;
         resolve();
     }).then(
         readDataTypesMap
@@ -1052,7 +1053,8 @@ function populateTableWorker(tableName, strSelectFieldList, offset, rowsInChunk,
                                                         resolvePopulateTableWorker();
                                                     } else {
                                                       sql = 'COPY "' + self._schema + '"."' + tableName + '" FROM '
-                                                              + '\'' + filename + '\' DELIMITER \'' + ',\'' + ' CSV;';
+                                                              + '\'' + filename + '\' DELIMITER \'' + ',\'' + ' CSV'
+                                                              + ' credentials "'+self._redshiftCredentialsString+'";';
 
                                                             client.query(sql, (err, result) => {
                                                                 done();
