@@ -1773,51 +1773,48 @@ function prepareArrayOfTablesAndChunkOffsets(tableName) {
                                                                 + '"' + self._schema + '"."' + tableName + '": ' + rowsCnt;
 
                                         log(msg, self._dicTables[tableName].tableLogPath);
-                                        var i =0;
+                                        var records=[];
                                         for (let offset = 0; offset < rowsCnt; offset += rowsInChunk) {
-                                            arrDataPoolPromises.push(new Promise(resolveDataUnit => {
-                                                pg.connect(self._targetConString, (error, client, done) => {
-                                                    if (error) {
-                                                        done();
-                                                        generateError('\t--[prepareArrayOfTablesAndChunkOffsets] Cannot connect to PostgreSQL server...\n' + error);
-                                                        resolveDataUnit();
-                                                    } else {
-                                                        let strJson = '{"_tableName":"' + tableName
-                                                                    + '","_selectFieldList":"' + strSelectFieldList + '",'
-                                                                    + '"_offset":' + offset + ','
-                                                                    + '"_rowsInChunk":' + rowsInChunk + ','
-                                                                    + '"_rowsCnt":' + rowsCnt + '}';
+                                            //arrDataPoolPromises.push(new Promise(resolveDataUnit => {
 
-                                                        let sql = 'INSERT INTO "' + self._schema + '"."data_pool_' + self._schema + self._mySqlDbName + '" VALUES($1);';
-                                                        if((i % 50) === 0){
-                                                            log('\t--[prepareArrayOfTablesAndChunkOffsets] Writing data pool record '+i+' for '+tableName);
-                                                        }
-                                                        client.query(sql, [strJson], err => {
-                                                            done();
+                                                let strJson = '{"_tableName":"' + tableName
+                                                            + '","_selectFieldList":"' + strSelectFieldList + '",'
+                                                            + '"_offset":' + offset + ','
+                                                            + '"_rowsInChunk":' + rowsInChunk + ','
+                                                            + '"_rowsCnt":' + rowsCnt + '}';
+                                                records.push(strJson);
 
-                                                            if (err) {
-                                                                generateError('\t--[prepareArrayOfTablesAndChunkOffsets] INSERT failed...\n' + err, sql);
-                                                            }
+                                                //});
+                                            }
 
-                                                            resolveDataUnit();
-                                                        });
-                                                    }
-                                                });
-                                            }));
-                                            i++;
-                                        }
+                                      }
 
-                                        Promise.all(arrDataPoolPromises).then(() => {
-                                          log('\t--[prepareArrayOfTablesAndChunkOffsets] Wrote '+i+'data pool records  for '+tableName);
-                                          resolve();
-                                        });
-                                    }
-                                });
-                            }
-                        });
-                    }
-                });
-            });
+
+                                      pg.connect(self._targetConString, (error, client, done) => {
+                                          if (error) {
+                                              done();
+                                              generateError('\t--[prepareArrayOfTablesAndChunkOffsets] Cannot connect to PostgreSQL server...\n' + error);
+                                              resolveDataUnit();
+                                          } else {
+                                            let sql = 'INSERT INTO "' + self._schema + '"."data_pool_' + self._schema + self._mySqlDbName + '" VALUES($1);';
+
+                                            client.query(sql, [strJson], err => {
+                                                done();
+
+                                                if (err) {
+                                                    generateError('\t--[prepareArrayOfTablesAndChunkOffsets] INSERT failed...\n' + err, sql);
+                                                }
+
+                                                resolve();
+                                            });
+                                          }
+
+
+                              });
+                      });
+                  }
+              });
+            }
         },
         () => generateError('\t--[prepareArrayOfTablesAndChunkOffsets] Cannot establish DB connections...')
     );
