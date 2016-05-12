@@ -537,7 +537,7 @@ function createDataPoolTable() {
                 generateError('\t--[createDataPoolTable] Cannot connect to PostgreSQL server...\n' + error);
                 reject();
             } else {
-                let sql = 'DROP TABLE IF EXISTS "' + self._schema + '"."data_pool_' + self._schema + self._mySqlDbName + '" cascade'; 
+                let sql = 'DROP TABLE IF EXISTS "' + self._schema + '"."data_pool_' + self._schema + self._mySqlDbName + '" cascade';
                 client.query(sql, err => {
                   sql = 'CREATE TABLE "' + self._schema + '"."data_pool_' + self._schema + self._mySqlDbName + '"(' + '"json" '+mapDataTypes(self._dataTypesMap, 'text') + ');';
                   if (err) {
@@ -1088,7 +1088,7 @@ function populateTableWorker(tableName, strSelectFieldList, offset, rowsInChunk,
                                                                     }*/
 
                                                                 } else {
-                                                                    self._dicTables[tableName].totalRowsInserted += result.rowCount;
+                                                                    self._dicTables[tableName].totalRowsInserted += rowsInChunk;
                                                                     let msg = '\t--[populateTableWorker]  For now inserted: ' + self._dicTables[tableName].totalRowsInserted + ' rows, '
                                                                             + 'Total rows to insert into "' + self._schema + '"."' + tableName + '": ' + rowsCnt;
 
