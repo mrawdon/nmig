@@ -979,7 +979,7 @@ function createTable(tableName) {
 function writeFile(buffer, csvAddr, callback){
   if(true){
     var key = uuid.v4() + csvAddr;
-    self.s3bucket.upload({Key: key, Body: buffer}, function(err, data) {
+    self._s3Bucket.upload({Key: key, Body: buffer}, function(err, data) {
       if(err){
         generateError('\t--[populateTableWorker] ' + err);
         callback(err);
