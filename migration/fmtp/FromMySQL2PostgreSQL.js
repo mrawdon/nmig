@@ -1794,11 +1794,11 @@ function prepareArrayOfTablesAndChunkOffsets(tableName) {
                                           if (error) {
                                               done();
                                               generateError('\t--[prepareArrayOfTablesAndChunkOffsets] Cannot connect to PostgreSQL server...\n' + error);
-                                              resolveDataUnit();
+
                                           } else {
                                             let sql = 'INSERT INTO "' + self._schema + '"."data_pool_' + self._schema + self._mySqlDbName + '" VALUES($1);';
 
-                                            client.query(sql, [strJson], err => {
+                                            client.query(sql, records, err => {
                                                 done();
 
                                                 if (err) {
@@ -1808,13 +1808,13 @@ function prepareArrayOfTablesAndChunkOffsets(tableName) {
                                                 resolve();
                                             });
                                           }
-
-
+                                        });
+                                    });
+                                  }
                               });
-                      });
-                  }
-              });
-            }
+                            }
+                          });
+                        });
         },
         () => generateError('\t--[prepareArrayOfTablesAndChunkOffsets] Cannot establish DB connections...')
     );
