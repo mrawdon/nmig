@@ -1796,8 +1796,11 @@ function prepareArrayOfTablesAndChunkOffsets(tableName) {
                                               generateError('\t--[prepareArrayOfTablesAndChunkOffsets] Cannot connect to PostgreSQL server...\n' + error);
 
                                           } else {
-                                            let sql = 'INSERT INTO "' + self._schema + '"."data_pool_' + self._schema + self._mySqlDbName + '" VALUES($1);';
-
+                                            let sql = 'INSERT INTO "' + self._schema + '"."data_pool_' + self._schema + self._mySqlDbName + '" VALUES(';
+                                            for(var i =1; i<= records.length; i++){
+                                              sql+="($"+i+")";
+                                            }
+                                            sql +=');';
                                             client.query(sql, records, err => {
                                                 done();
 
