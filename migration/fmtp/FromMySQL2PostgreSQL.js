@@ -1909,7 +1909,7 @@ function continueProcessAfterDataLoading() {
     for (let i = 0; i < self._tablesToMigrate.length; ++i) {
         let tableName = self._tablesToMigrate[i];
         promises.push(
-            processEnum(tableName).then(() => {
+            /*processEnum(tableName).then(() => {
                 processNull(tableName);
             }).then(() => {
                 processDefault(tableName);
@@ -1919,7 +1919,7 @@ function continueProcessAfterDataLoading() {
                 processIndexAndKey(tableName);
             }).then(() => {
                 processComment(tableName);
-            })
+            })*/
         );
     }
 
