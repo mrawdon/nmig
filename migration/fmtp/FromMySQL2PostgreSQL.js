@@ -24,7 +24,7 @@ const fs                 = require('fs');
 const pg                 = require('pg');
 const mysql              = require('mysql');
 const events             = require('events');
-const csvStringify       = require('./CsvStringifyModified');
+const csvStringify       = require('csv-stringify');
 const viewGenerator      = require('./ViewGenerator');
 const arrangeColumnsData = require('./ColumnsDataArranger');
 const Table              = require('./Table');
@@ -1092,7 +1092,7 @@ function populateTableWorker(tableName, strSelectFieldList, offset, rowsInChunk,
                                                                         log(msg);
 
                                                                     }*/
-
+                                                                    resolvePopulateTableWorker();
                                                                 } else {
                                                                     self._dicTables[tableName].totalRowsInserted += rowsInChunk;
                                                                     let msg = '\t--[populateTableWorker]  For now inserted: ' + self._dicTables[tableName].totalRowsInserted + ' rows, '
