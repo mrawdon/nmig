@@ -1053,7 +1053,7 @@ function populateTableWorker(tableName, strSelectFieldList, offset, rowsInChunk,
                                         resolvePopulateTableWorker();
                                     } else {
                                         //the null character causes things to blow up
-                                        csvString = csvString.replace('\0','');
+                                        csvString = csvString.replace(/\0/g,'');
                                         let buffer = new Buffer(csvString, self._encoding);
                                         csvString  = null;
                                         //log('\t--[populateTableWorker] Writing rows for '+tableName+' '+offset+','+(offset+rowsInChunk));
