@@ -1069,7 +1069,7 @@ function populateTableWorker(tableName, strSelectFieldList, offset, rowsInChunk,
                                                       sql = 'COPY "' + self._schema + '"."' + tableName + '" FROM '
                                                               + '\'' + filename
                                                               + '\' credentials \''+self._redshiftCredentialsString+'\''
-                                                              + ' DELIMITER \'' + ',\'' + ' CSV;';
+                                                              + ' DELIMITER \'' + ',\'' + ' CSV TRUNCATECOLUMNS;';
 
                                                             log('\t--[populateTableWorker] Copying rows for '+tableName+' '+offset+','+(offset+rowsInChunk));
                                                             client.query(sql, (err, result) => {
