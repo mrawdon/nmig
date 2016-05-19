@@ -135,6 +135,7 @@ function boot() {
 
         self._targetConString     = targetConString;
         pg.defaults.poolSize      = self._maxPoolSizeTarget;
+        self._onlyLogCreateSql = self._config._onlyLogCreateSql;
 
         AWS.config.credentials = new AWS.EC2MetadataCredentials({
           httpOptions: { timeout: 30000 }
@@ -950,6 +951,13 @@ function createTable(tableName) {
 
                                               rows = null;
                                               sql  = sql.slice(0, -1) + ');';
+                                              if(self._onlyLogCreateSql){
+                                                  log(sql, 'createtables');
+                                                  done();
+                                                  resolveCreateTable();
+                                                  return ;
+                                              }
+
                                               client.query(sql, err => {
                                                   done();
 
@@ -1652,6 +1660,9 @@ function processTableBeforeDataLoading(tableName) {
             generateError('\t--[processTableBeforeDataLoading] Cannot establish DB connections...');
         }
     ).then(
+        if(self._onlyLogCreateSql){
+          return;
+        }
         () => {
             return prepareArrayOfTablesAndChunkOffsets(tableName);
         },
@@ -1880,7 +1891,7 @@ function readDataPool() {
  * @returns {undefined}
  */
 function dataPipe() {
-    if (self._dataPool.length === 0) {
+    if (self._dataPool.length === 0 || self._onlyLogCreateSql){
         return continueProcessAfterDataLoading();
     }
 
