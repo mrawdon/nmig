@@ -1660,10 +1660,10 @@ function processTableBeforeDataLoading(tableName) {
             generateError('\t--[processTableBeforeDataLoading] Cannot establish DB connections...');
         }
     ).then(
-        if(self._onlyLogCreateSql){
-          return;
-        }
         () => {
+          if(self._onlyLogCreateSql){
+            return;
+          }
             return prepareArrayOfTablesAndChunkOffsets(tableName);
         },
         () => {
